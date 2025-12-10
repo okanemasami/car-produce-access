@@ -2,6 +2,7 @@
 import os
 import platform
 import sys
+import json
 from pathlib import Path
 
 # Windows環境でのUTF-8出力を強制設定
@@ -46,17 +47,24 @@ REG_CAR_SENSOR_FOLDER_NAME = 'カーセンサー_登録物件数'
 REG_GOONET_FOLDER_NAME = 'グーネット_登録物件数'
 
 def get_downloads_folder():
-    """OSに応じてダウンロードフォルダのパスを取得"""
-    system = platform.system()
-    
-    if system == "Windows":
-        downloads_path = Path.home() / "Downloads"
-    elif system == "Darwin":  # macOS
-        downloads_path = Path.home() / "Downloads"
-    else:  # Linux
-        downloads_path = Path.home() / "Downloads"
-    
-    return downloads_path
+    """OSに応じてダウンロードフォルダのパスを取得（環境変数・settings.json対応）"""
+    # 1. 環境変数 DOWNLOAD_DIR を優先
+    env_dir = os.getenv("DOWNLOAD_DIR")
+    if env_dir:
+        return Path(env_dir)
+
+    # 2. settings.json から読み取り
+    try:
+        if os.path.exists("settings.json"):
+            with open("settings.json", "r", encoding="utf-8") as f:
+                settings = json.load(f)
+                if "DOWNLOAD_DIR" in settings:
+                    return Path(settings["DOWNLOAD_DIR"])
+    except Exception:
+        pass
+
+    # 3. デフォルト: OS標準のDownloadsフォルダ
+    return Path.home() / "Downloads"
 
 def authenticate_google_drive():
     """Google Drive APIの認証を行う"""

@@ -5,9 +5,9 @@ on:
   # 手動実行を許可
   workflow_dispatch:
 
-  # 毎日定時実行する場合(例: 日本時間9時 = UTC 0時)
-  # schedule:
-  #   - cron: '0 0 * * *'
+  # 毎日12時(日本時間)に自動実行
+  schedule:
+    - cron: '0 3 * * *'  # UTC 3時 = JST 12時
 
 jobs:
   download-and-upload:
@@ -64,27 +64,41 @@ jobs:
       - name: Create download directory
         run: mkdir -p downloads
 
-      # 8. カーセンサーのデータをダウンロード
-      - name: Download CarSensor data
+      # 8. カーセンサーのアクセス数データをダウンロード
+      - name: Download CarSensor access data
         run: |
           export PYTHONIOENCODING=utf-8
           python carsensor_download.py
         continue-on-error: true
 
-      # 9. グーネットのデータをダウンロード
-      - name: Download Goonet data
+      # 9. グーネットのアクセス数データをダウンロード
+      - name: Download Goonet access data
         run: |
           export PYTHONIOENCODING=utf-8
           python goonet_download.py
         continue-on-error: true
 
-      # 10. Google Driveにアップロード
+      # 10. カーセンサーの物件数データをダウンロード
+      - name: Download CarSensor bukken data
+        run: |
+          export PYTHONIOENCODING=utf-8
+          python carsensor_bukken.py
+        continue-on-error: true
+
+      # 11. グーネットの物件数データをダウンロード
+      - name: Download Goonet bukken data
+        run: |
+          export PYTHONIOENCODING=utf-8
+          python goonet_bukken.py
+        continue-on-error: true
+
+      # 12. Google Driveにアップロード
       - name: Upload to Google Drive
         run: |
           export PYTHONIOENCODING=utf-8
           python toGoogleDrive.py
 
-      # 11. ダウンロードしたファイルをアーティファクトとして保存(オプション)
+      # 13. ダウンロードしたファイルをアーティファクトとして保存(オプション)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()

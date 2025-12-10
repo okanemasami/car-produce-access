@@ -232,7 +232,8 @@ def upload_matching_downloads():
         # 収集
         all_csvs = [p for p in downloads_folder.glob('*.csv')]
         hankyo = [p for p in all_csvs if 'hankyobukken' in p.name.lower()]
-        kouka = [p for p in all_csvs if '効果分析（在庫）' in p.name]
+        # グーネットアクセス数: リネーム後のファイル名で検索（ハイエース専門店_ または CARAD_ で始まる）
+        kouka = [p for p in all_csvs if p.name.startswith('ハイエース専門店_') or p.name.startswith('CARAD_')]
         toroku = [p for p in all_csvs if 'torokubukken' in p.name.lower()]
         zaikoken = [p for p in all_csvs if '在庫検索一覧' in p.name]
 

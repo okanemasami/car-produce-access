@@ -1,0 +1,94 @@
+name: Car Data Download
+
+# ワークフローの実行タイミング
+on:
+  # 手動実行を許可
+  workflow_dispatch:
+
+  # 毎日定時実行する場合(例: 日本時間9時 = UTC 0時)
+  # schedule:
+  #   - cron: '0 0 * * *'
+
+jobs:
+  download-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. リポジトリをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Pythonをセットアップ
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # 3. 依存パッケージをインストール
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4. ChromeとChromeDriverをインストール(Selenium用)
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # 5. 機密情報をファイルに書き込み
+      - name: Create settings.json
+        run: |
+          cat > settings.json << 'EOF'
+          {
+            "CARSENSOR_USERNAME": "${{ secrets.CARSENSOR_USERNAME }}",
+            "CARSENSOR_PASSWORD": "${{ secrets.CARSENSOR_PASSWORD }}",
+            "GOONET_USERNAME": "${{ secrets.GOONET_USERNAME }}",
+            "GOONET_PASSWORD": "${{ secrets.GOONET_PASSWORD }}",
+            "HEADLESS": true,
+            "DOWNLOAD_DIR": "./downloads"
+          }
+          EOF
+
+      # 6. Google Drive認証情報を作成
+      - name: Create credentials.json
+        run: |
+          echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
+      - name: Create token.json
+        run: |
+          echo '${{ secrets.GOOGLE_TOKEN }}' > token.json
+
+      # 7. ダウンロードディレクトリを作成
+      - name: Create download directory
+        run: mkdir -p downloads
+
+      # 8. カーセンサーのデータをダウンロード
+      - name: Download CarSensor data
+        run: |
+          export PYTHONIOENCODING=utf-8
+          python carsensor_download.py
+        continue-on-error: true
+
+      # 9. グーネットのデータをダウンロード
+      - name: Download Goonet data
+        run: |
+          export PYTHONIOENCODING=utf-8
+          python goonet_download.py
+        continue-on-error: true
+
+      # 10. Google Driveにアップロード
+      - name: Upload to Google Drive
+        run: |
+          export PYTHONIOENCODING=utf-8
+          python toGoogleDrive.py
+
+      # 11. ダウンロードしたファイルをアーティファクトとして保存(オプション)
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: downloaded-files
+          path: downloads/
+          retention-days: 7

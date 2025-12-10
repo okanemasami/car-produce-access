@@ -1,0 +1,38 @@
+# 機密情報 - GitHubにアップロードしない
+settings.json
+token.json
+credentials.json
+
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# ダウンロードファイル
+*.csv
+downloads/
+
+# OS関連
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ログファイル
+*.log
+
+# その他の一時ファイル
+.env
+*.bak

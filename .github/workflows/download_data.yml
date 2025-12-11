@@ -5,9 +5,9 @@ on:
   # 手動実行を許可
   workflow_dispatch:
 
-  # 毎日12時15分(日本時間)に自動実行
+  # 毎日10時27分(日本時間)に自動実行
   schedule:
-    - cron: '15 3 * * *'  # UTC 3:15 = JST 12:15
+    - cron: '27 1 * * *'  # UTC 1:27 = JST 10:27
 
 jobs:
   download-and-upload:

@@ -66,8 +66,8 @@ def list_data_files(root_dir: Path):
     return files
 
 def wait_for_download(before_files, dir_path: Path, timeout=90):
-    """10秒待機して新規ファイルを返す"""
-    time.sleep(10)
+    """15秒待機して新規ファイルを返す"""
+    time.sleep(15)
     before_set = set(before_files)
     now = list_data_files(dir_path)
     new_files = [p for p in now if p not in before_set]
@@ -85,14 +85,19 @@ options.add_argument("--disable-gpu")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--window-size=1920,1080")
+# User-Agent を設定してヘッドレス検出を回避
+options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
 prefs = {
     "download.default_directory": download_path,
     "download.prompt_for_download": False,
     "download.directory_upgrade": True,
     "safebrowsing.enabled": True,
+    "profile.default_content_settings.popups": 0,
 }
 options.add_experimental_option("prefs", prefs)
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_experimental_option("useAutomationExtension", False)
 
 driver = None
 try:
@@ -177,7 +182,7 @@ try:
     try:
         driver.execute_script("excel();")
         print("JavaScript 関数 excel() を実行しました")
-        time.sleep(3)  # JavaScript実行後に待機
+        time.sleep(10)  # JavaScript実行後に長めに待機
         triggered = True
     except Exception as e:
         print(f"excel() 実行でエラー: {e}")

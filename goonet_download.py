@@ -198,8 +198,8 @@ LOGIN_URL = "https://motorgate.jp/"
 TARGET_URL = "https://motorgate.jp/ana/stockeffect"
 
 TARGET_SHOPS = [
-    {"value": "1000491", "name": "ハイエース専門店　ＣＡＲ　ＰＲＯＤＵＣＥ　｜　カープロデュース", "filename_prefix": "ハイエース専門店_"},
-    {"value": "1002529", "name": "輸入車専門店　ＣＡＲＡＤ", "filename_prefix": "CARAD_"},
+    {"value": "1000491", "name": "ハイエース専門店　ＣＡＲ　ＰＲＯＤＵＣＥ　｜　カープロデュース", "filename_prefix": "ハイエース専門店_", "wait_seconds": 5},
+    {"value": "1002529", "name": "輸入車専門店　ＣＡＲＡＤ", "filename_prefix": "CARAD_", "wait_seconds": 10},
 ]
 
 def login_goonet(driver, username: str, password: str):
@@ -323,9 +323,10 @@ def main():
         for shop in TARGET_SHOPS:
             ok = trigger_download_for_shop(driver, shop)
             if ok:
+                wait_time = shop.get("wait_seconds", 5)
                 print(f"{shop['name']}: ダウンロードボタンをクリック完了")
-                print("5秒待機...")
-                time.sleep(5)
+                print(f"{wait_time}秒待機...")
+                time.sleep(wait_time)
             else:
                 print(f"{shop['name']}: ダウンロードボタンクリックに失敗")
 

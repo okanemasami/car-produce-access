@@ -66,8 +66,8 @@ def list_data_files(root_dir: Path):
     return files
 
 def wait_for_download(before_files, dir_path: Path, timeout=90):
-    """5秒待機して新規ファイルを返す"""
-    time.sleep(5)
+    """10秒待機して新規ファイルを返す"""
+    time.sleep(10)
     before_set = set(before_files)
     now = list_data_files(dir_path)
     new_files = [p for p in now if p not in before_set]
@@ -177,6 +177,7 @@ try:
     try:
         driver.execute_script("excel();")
         print("JavaScript 関数 excel() を実行しました")
+        time.sleep(3)  # JavaScript実行後に待機
         triggered = True
     except Exception as e:
         print(f"excel() 実行でエラー: {e}")

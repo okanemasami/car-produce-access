@@ -235,7 +235,7 @@ def upload_matching_downloads():
         # グーネットアクセス数: リネーム後のファイル名で検索（ハイエース専門店_ または CARAD_ で始まる）
         kouka = [p for p in all_csvs if p.name.startswith('ハイエース専門店_') or p.name.startswith('CARAD_')]
         toroku = [p for p in all_csvs if 'torokubukken' in p.name.lower()]
-        zaikoken = [p for p in all_csvs if '在庫検索一覧' in p.name]
+        zaikoken = [p for p in all_csvs if '在庫検索一覧' in p.name or 'goonet_bukken' in p.name.lower()]
 
         print("アップロード対象(カーセンサー: hankyobukken):")
         for p in hankyo:

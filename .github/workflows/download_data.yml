@@ -85,11 +85,12 @@ jobs:
           python carsensor_bukken.py
         continue-on-error: true
 
-      # 11. グーネットの物件数データをダウンロード
+      # 11. グーネットの物件数データをダウンロード（仮想ディスプレイ使用、ヘッドレス無効）
       - name: Download Goonet bukken data
         run: |
           export PYTHONIOENCODING=utf-8
-          python goonet_bukken.py
+          export HEADLESS=false
+          xvfb-run --auto-servernum python goonet_bukken.py
         continue-on-error: true
 
       # 12. Google Driveにアップロード

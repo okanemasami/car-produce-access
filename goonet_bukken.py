@@ -40,10 +40,15 @@ def to_bool(v, default=False):
     return default
 
 settings = load_settings()
-username = settings.get("GOONET_USERNAME")
-password = settings.get("GOONET_PASSWORD")
-download_dir_str = settings.get("DOWNLOAD_DIR")
-headless = to_bool(settings.get("HEADLESS", True), default=True)
+username = os.getenv("GOONET_USERNAME") or settings.get("GOONET_USERNAME")
+password = os.getenv("GOONET_PASSWORD") or settings.get("GOONET_PASSWORD")
+download_dir_str = os.getenv("DOWNLOAD_DIR") or settings.get("DOWNLOAD_DIR")
+# 環境変数 HEADLESS を優先（GitHub Actions用）
+headless_env = os.getenv("HEADLESS")
+if headless_env is not None:
+    headless = to_bool(headless_env, default=True)
+else:
+    headless = to_bool(settings.get("HEADLESS", True), default=True)
 
 if not username or not password:
     raise RuntimeError("setting.json に 'GOONET_USERNAME' と 'GOONET_PASSWORD' を設定してください。")

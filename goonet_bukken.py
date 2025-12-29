@@ -202,9 +202,32 @@ try:
 
             # ActionChainsで確実にクリック
             try:
+                # ブラウザコンソールログを取得できるようにする
+                driver.execute_cdp_cmd('Log.enable', {})
+
                 actions = ActionChains(driver)
                 actions.move_to_element(export_link).click().perform()
                 print("エクスポートリンクをクリックしました（ActionChains）")
+
+                # クリック後のブラウザコンソールログを確認
+                time.sleep(2)
+                try:
+                    logs = driver.get_log('browser')
+                    if logs:
+                        print("ブラウザコンソールログ:")
+                        for log in logs[-10:]:  # 最新10件
+                            print(f"  [{log['level']}] {log['message']}")
+                except Exception as log_e:
+                    print(f"ログ取得エラー: {log_e}")
+
+                # ページのreadyStateを確認
+                ready_state = driver.execute_script("return document.readyState;")
+                print(f"ページのreadyState: {ready_state}")
+
+                # excel()関数が実際に何をするか確認
+                excel_func = driver.execute_script("return excel.toString();")
+                print(f"excel()関数の定義:\n{excel_func[:500]}")  # 最初の500文字
+
                 time.sleep(20)  # クリック後に長めに待機
                 triggered = True
             except Exception as e_ac:

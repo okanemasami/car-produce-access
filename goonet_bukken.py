@@ -266,7 +266,7 @@ try:
                         # CSVファイルとして保存
                         from datetime import datetime
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        filename = os.path.join(download_dir, f"goonet_bukken_{timestamp}.csv")
+                        filename = os.path.join(DOWNLOAD_DIR, f"goonet_bukken_{timestamp}.csv")
 
                         with open(filename, 'wb') as f:
                             f.write(response.content)

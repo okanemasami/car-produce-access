@@ -18,6 +18,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 
 # ===================== 設定読み込み =====================
 def load_settings():
@@ -188,21 +189,38 @@ try:
     if export_link:
         try:
             print(f"エクスポートリンクを直接クリック試行...")
+            # 邪魔な要素を非表示にする
+            driver.execute_script("""
+                var input = document.getElementById('ac1');
+                if (input) input.style.display = 'none';
+            """)
+            time.sleep(0.5)
+
             # スクロールして要素を表示
-            driver.execute_script("arguments[0].scrollIntoView(true);", export_link)
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", export_link)
             time.sleep(1)
-            # 通常のクリック
-            export_link.click()
-            print("エクスポートリンクをクリックしました（通常のclick）")
-            time.sleep(15)  # クリック後に長めに待機
-            triggered = True
+
+            # ActionChainsで確実にクリック
+            try:
+                actions = ActionChains(driver)
+                actions.move_to_element(export_link).click().perform()
+                print("エクスポートリンクをクリックしました（ActionChains）")
+                time.sleep(20)  # クリック後に長めに待機
+                triggered = True
+            except Exception as e_ac:
+                print(f"ActionChainsでエラー: {e_ac}")
+                # 通常のクリック
+                export_link.click()
+                print("エクスポートリンクをクリックしました（通常のclick）")
+                time.sleep(20)
+                triggered = True
         except Exception as e1:
             print(f"通常のクリックでエラー: {e1}")
             # JavaScriptでクリック
             try:
                 driver.execute_script("arguments[0].click();", export_link)
                 print("エクスポートリンクをクリックしました（JS経由）")
-                time.sleep(15)
+                time.sleep(20)
                 triggered = True
             except Exception as e2:
                 print(f"JS経由のクリックでもエラー: {e2}")

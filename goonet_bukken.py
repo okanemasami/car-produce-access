@@ -183,45 +183,42 @@ try:
     before = list_data_files(DOWNLOAD_DIR)
 
     triggered = False
-    # 2) JS 関数 excel() の直接実行
-    try:
-        # デバッグ: excel() 関数が存在するか確認
-        excel_exists = driver.execute_script("return typeof excel === 'function';")
-        print(f"excel() 関数の存在確認: {excel_exists}")
 
-        # デバッグ: 現在のURL
-        print(f"現在のURL: {driver.current_url}")
-
-        driver.execute_script("excel();")
-        print("JavaScript 関数 excel() を実行しました")
-
-        # デバッグ: スクリーンショットとHTML保存
+    # 優先順位1: リンク要素を直接クリック（最も確実）
+    if export_link:
         try:
-            screenshot_path = DOWNLOAD_DIR / "debug_screenshot.png"
-            driver.save_screenshot(str(screenshot_path))
-            print(f"スクリーンショット保存: {screenshot_path}")
+            print(f"エクスポートリンクを直接クリック試行...")
+            # スクロールして要素を表示
+            driver.execute_script("arguments[0].scrollIntoView(true);", export_link)
+            time.sleep(1)
+            # 通常のクリック
+            export_link.click()
+            print("エクスポートリンクをクリックしました（通常のclick）")
+            time.sleep(15)  # クリック後に長めに待機
+            triggered = True
+        except Exception as e1:
+            print(f"通常のクリックでエラー: {e1}")
+            # JavaScriptでクリック
+            try:
+                driver.execute_script("arguments[0].click();", export_link)
+                print("エクスポートリンクをクリックしました（JS経由）")
+                time.sleep(15)
+                triggered = True
+            except Exception as e2:
+                print(f"JS経由のクリックでもエラー: {e2}")
 
-            html_path = DOWNLOAD_DIR / "debug_page.html"
-            with open(html_path, "w", encoding="utf-8") as f:
-                f.write(driver.page_source)
-            print(f"HTML保存: {html_path}")
-        except Exception as debug_e:
-            print(f"デバッグ情報保存でエラー: {debug_e}")
-
-        time.sleep(10)  # JavaScript実行後に長めに待機
-        triggered = True
-    except Exception as e:
-        print(f"excel() 実行でエラー: {e}")
-
-    # 3) 失敗時はリンクの click を試行
+    # 優先順位2: JS 関数 excel() の直接実行（フォールバック）
     if not triggered:
         try:
-            if export_link:
-                driver.execute_script("arguments[0].click();", export_link)
-                print("エクスポートリンクをクリック（JS 経由）")
-                triggered = True
+            excel_exists = driver.execute_script("return typeof excel === 'function';")
+            print(f"excel() 関数の存在確認: {excel_exists}")
+
+            driver.execute_script("excel();")
+            print("JavaScript 関数 excel() を実行しました")
+            time.sleep(15)
+            triggered = True
         except Exception as e:
-            print(f"リンククリックでエラー: {e}")
+            print(f"excel() 実行でエラー: {e}")
 
     # 4) さらに失敗時は “エクスポート” テキスト検索
     if not triggered:

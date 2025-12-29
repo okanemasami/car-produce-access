@@ -2,6 +2,9 @@
 selenium>=4.0.0
 webdriver-manager>=4.0.0
 
+# HTTP リクエスト
+requests>=2.0.0
+
 # Google Drive API関連
 google-api-python-client>=2.0.0
 google-auth-httplib2>=0.1.0

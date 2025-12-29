@@ -206,97 +206,84 @@ try:
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", export_link)
             time.sleep(1)
 
-            # JavaScriptで直接フォームをサブミット（最も確実）
+            # フォームデータを取得してHTTP POSTで直接リクエスト送信
             try:
-                print("JavaScriptでフォームを直接サブミット試行...")
+                print("フォームデータを取得して直接POSTリクエストを送信...")
 
-                # excel()関数の処理を手動で実行（クリックではなく直接）
-                submit_result = driver.execute_script("""
-                    // export_flgをチェック
-                    $('input[name=export_flg]').attr('checked', true);
+                # Cookieとフォームデータを取得
+                cookies = driver.get_cookies()
+                cookie_dict = {cookie['name']: cookie['value'] for cookie in cookies}
 
-                    // フォームのactionを設定
-                    var rootPath = $('#root_path').val();
-                    var action = rootPath + 'group/stock/search/csv';
-                    $('#frm').attr('action', action);
-
-                    // 直接HTMLFormElement.submit()を呼ぶ（jQueryではなく）
+                # フォームデータを全て取得
+                form_data = driver.execute_script("""
+                    var formData = {};
                     var form = document.getElementById('frm');
-                    if (form) {
-                        form.submit();
-                        return 'Form submitted directly';
-                    } else {
-                        return 'Form not found';
-                    }
+                    if (!form) return null;
+
+                    // すべてのinput, select, textarea要素を取得
+                    var inputs = form.querySelectorAll('input, select, textarea');
+                    inputs.forEach(function(input) {
+                        if (input.name) {
+                            if (input.type === 'checkbox' || input.type === 'radio') {
+                                if (input.checked) {
+                                    formData[input.name] = input.value;
+                                }
+                            } else {
+                                formData[input.name] = input.value;
+                            }
+                        }
+                    });
+
+                    // export_flgを追加
+                    formData['export_flg'] = '1';
+
+                    return formData;
                 """)
-                print(f"フォームサブミット結果: {submit_result}")
 
-                # クリック後のブラウザコンソールログを確認
-                time.sleep(2)
-                try:
-                    logs = driver.get_log('browser')
-                    if logs:
-                        print("ブラウザコンソールログ:")
-                        for log in logs[-10:]:  # 最新10件
-                            print(f"  [{log['level']}] {log['message']}")
-                except Exception as log_e:
-                    print(f"ログ取得エラー: {log_e}")
-
-                # ページのreadyStateを確認
-                ready_state = driver.execute_script("return document.readyState;")
-                print(f"ページのreadyState: {ready_state}")
-
-                # excel()関数が実際に何をするか確認
-                excel_func = driver.execute_script("return excel.toString();")
-                print(f"excel()関数の定義 (全体):")
-                print(excel_func)
-
-                # フォームの存在確認
-                forms = driver.execute_script("return document.forms.length;")
-                print(f"\nページ内のフォーム数: {forms}")
-
-                # #frm の存在確認（重要！）
-                frm_exists = driver.execute_script("return document.getElementById('frm') !== null;")
-                print(f"#frm の存在: {frm_exists}")
-
-                if frm_exists:
-                    frm_action = driver.execute_script("return document.getElementById('frm').action;")
-                    print(f"#frm action: {frm_action}")
+                if form_data is None:
+                    print("エラー: フォームが見つかりません")
+                    triggered = False
                 else:
-                    print("エラー: #frm が見つかりません！これがダウンロード失敗の原因です。")
+                    print(f"取得したフォームデータ項目数: {len(form_data)}")
 
-                # root_path の確認
-                root_path = driver.execute_script("return document.getElementById('root_path') ? document.getElementById('root_path').value : 'NOT FOUND';")
-                print(f"#root_path の値: {root_path}")
+                    # requestsライブラリでPOST送信
+                    import requests
 
-                # クリック後、ネットワークリクエストを確認
-                print("\nクリック後25秒待機して、ネットワークアクティビティを確認...")
-                time.sleep(25)
+                    csv_url = "https://motorgate.jp/group/stock/search/csv"
+                    headers = {
+                        'User-Agent': driver.execute_script("return navigator.userAgent;"),
+                        'Referer': 'https://motorgate.jp/group/stock/search',
+                        'Origin': 'https://motorgate.jp'
+                    }
 
-                # performance APIでリクエストを確認
-                try:
-                    perf = driver.execute_script("""
-                        var entries = performance.getEntriesByType('resource');
-                        var recent = entries.slice(-10);
-                        return recent.map(e => ({name: e.name, duration: e.duration}));
-                    """)
-                    print("最近のネットワークリクエスト:")
-                    for p in perf:
-                        print(f"  - {p['name']} ({p['duration']}ms)")
-                except Exception as perf_e:
-                    print(f"Performance API エラー: {perf_e}")
+                    print(f"POSTリクエスト送信先: {csv_url}")
+                    response = requests.post(csv_url, data=form_data, cookies=cookie_dict, headers=headers)
 
-                # 現在のURLを確認（リダイレクトされていないか）
-                current_url = driver.current_url
-                print(f"現在のURL: {current_url}")
-                triggered = True
-            except Exception as e_ac:
-                print(f"ActionChainsでエラー: {e_ac}")
-                # 通常のクリック
-                export_link.click()
-                print("エクスポートリンクをクリックしました（通常のclick）")
-                time.sleep(20)
-                triggered = True
+                    print(f"レスポンスステータス: {response.status_code}")
+                    print(f"Content-Type: {response.headers.get('Content-Type', 'N/A')}")
+
+                    if response.status_code == 200:
+                        # CSVファイルとして保存
+                        from datetime import datetime
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = os.path.join(download_dir, f"goonet_bukken_{timestamp}.csv")
+
+                        with open(filename, 'wb') as f:
+                            f.write(response.content)
+
+                        print(f"CSVファイルを保存しました: {filename}")
+                        print(f"ファイルサイズ: {len(response.content)} bytes")
+                        triggered = True
+                    else:
+                        print(f"エラー: ステータスコード {response.status_code}")
+                        print(f"レスポンス本文（最初の500文字）: {response.text[:500]}")
+                        triggered = False
+
+            except Exception as e_post:
+                print(f"POSTリクエストエラー: {e_post}")
+                import traceback
+                traceback.print_exc()
+                triggered = False
         except Exception as e1:
             print(f"通常のクリックでエラー: {e1}")
             # JavaScriptでクリック
@@ -341,32 +328,34 @@ try:
     if not triggered:
         raise RuntimeError("エクスポート操作を開始できませんでした。画面構造の変更が疑われます。")
 
-    # アラートが出る場合に備えてハンドリング
-    try:
-        alert = driver.switch_to.alert
-        print(f"ダウンロード時のアラート: {alert.text}")
-        alert.accept()
-        print("アラート OK")
-    except Exception:
-        pass
+    # 直接POSTでダウンロードした場合はここでの待機は不要
+    if not triggered:
+        # アラートが出る場合に備えてハンドリング
+        try:
+            alert = driver.switch_to.alert
+            print(f"ダウンロード時のアラート: {alert.text}")
+            alert.accept()
+            print("アラート OK")
+        except Exception:
+            pass
 
-    # --- ダウンロード完了待機 ---
-    print("ダウンロード完了待機中...")
-    print(f"ダウンロードディレクトリ: {DOWNLOAD_DIR}")
-    print(f"実行前ファイル数: {len(before)}")
+        # --- ダウンロード完了待機 ---
+        print("ダウンロード完了待機中...")
+        print(f"ダウンロードディレクトリ: {DOWNLOAD_DIR}")
+        print(f"実行前ファイル数: {len(before)}")
 
-    new_files = wait_for_download(before, DOWNLOAD_DIR, timeout=120)
-    if new_files:
-        print(f"ダウンロードされたファイル数: {len(new_files)}")
-        for nf in new_files:
-            print(f"  - {nf}")
-    else:
-        print("ダウンロードされたファイルが見つかりませんでした。")
-        current_files = list_data_files(DOWNLOAD_DIR)
-        print(f"現在のファイル数（デバッグ用）: {len(current_files)}")
-        print("現在のファイル一覧:")
-        for cf in current_files:
-            print(f"  - {cf}")
+        new_files = wait_for_download(before, DOWNLOAD_DIR, timeout=120)
+        if new_files:
+            print(f"ダウンロードされたファイル数: {len(new_files)}")
+            for nf in new_files:
+                print(f"  - {nf}")
+        else:
+            print("ダウンロードされたファイルが見つかりませんでした。")
+            current_files = list_data_files(DOWNLOAD_DIR)
+            print(f"現在のファイル数（デバッグ用）: {len(current_files)}")
+            print("現在のファイル一覧:")
+            for cf in current_files:
+                print(f"  - {cf}")
 
 except Exception as e:
     print(f"エラーが発生しました: {e}")

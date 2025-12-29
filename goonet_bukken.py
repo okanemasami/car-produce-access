@@ -185,8 +185,29 @@ try:
     triggered = False
     # 2) JS 関数 excel() の直接実行
     try:
+        # デバッグ: excel() 関数が存在するか確認
+        excel_exists = driver.execute_script("return typeof excel === 'function';")
+        print(f"excel() 関数の存在確認: {excel_exists}")
+
+        # デバッグ: 現在のURL
+        print(f"現在のURL: {driver.current_url}")
+
         driver.execute_script("excel();")
         print("JavaScript 関数 excel() を実行しました")
+
+        # デバッグ: スクリーンショットとHTML保存
+        try:
+            screenshot_path = DOWNLOAD_DIR / "debug_screenshot.png"
+            driver.save_screenshot(str(screenshot_path))
+            print(f"スクリーンショット保存: {screenshot_path}")
+
+            html_path = DOWNLOAD_DIR / "debug_page.html"
+            with open(html_path, "w", encoding="utf-8") as f:
+                f.write(driver.page_source)
+            print(f"HTML保存: {html_path}")
+        except Exception as debug_e:
+            print(f"デバッグ情報保存でエラー: {debug_e}")
+
         time.sleep(10)  # JavaScript実行後に長めに待機
         triggered = True
     except Exception as e:
@@ -233,12 +254,21 @@ try:
 
     # --- ダウンロード完了待機 ---
     print("ダウンロード完了待機中...")
+    print(f"ダウンロードディレクトリ: {DOWNLOAD_DIR}")
+    print(f"実行前ファイル数: {len(before)}")
+
     new_files = wait_for_download(before, DOWNLOAD_DIR, timeout=120)
     if new_files:
         print(f"ダウンロードされたファイル数: {len(new_files)}")
+        for nf in new_files:
+            print(f"  - {nf}")
     else:
         print("ダウンロードされたファイルが見つかりませんでした。")
-        print(f"現在のファイル数（デバッグ用）: {len(list_data_files(DOWNLOAD_DIR))}")
+        current_files = list_data_files(DOWNLOAD_DIR)
+        print(f"現在のファイル数（デバッグ用）: {len(current_files)}")
+        print("現在のファイル一覧:")
+        for cf in current_files:
+            print(f"  - {cf}")
 
 except Exception as e:
     print(f"エラーが発生しました: {e}")

@@ -123,6 +123,12 @@ try:
 except Exception:
     pass
 
+# ネットワークログを有効化
+try:
+    driver.execute_cdp_cmd('Network.enable', {})
+except Exception:
+    pass
+
 # ===================== 対象URL =====================
 login_url = "https://motorgate.jp/"
 target_url = "https://motorgate.jp/group/stock/search"
@@ -247,7 +253,26 @@ try:
                 root_path = driver.execute_script("return document.getElementById('root_path') ? document.getElementById('root_path').value : 'NOT FOUND';")
                 print(f"#root_path の値: {root_path}")
 
-                time.sleep(25)  # クリック後に長めに待機
+                # クリック後、ネットワークリクエストを確認
+                print("\nクリック後25秒待機して、ネットワークアクティビティを確認...")
+                time.sleep(25)
+
+                # performance APIでリクエストを確認
+                try:
+                    perf = driver.execute_script("""
+                        var entries = performance.getEntriesByType('resource');
+                        var recent = entries.slice(-10);
+                        return recent.map(e => ({name: e.name, duration: e.duration}));
+                    """)
+                    print("最近のネットワークリクエスト:")
+                    for p in perf:
+                        print(f"  - {p['name']} ({p['duration']}ms)")
+                except Exception as perf_e:
+                    print(f"Performance API エラー: {perf_e}")
+
+                # 現在のURLを確認（リダイレクトされていないか）
+                current_url = driver.current_url
+                print(f"現在のURL: {current_url}")
                 triggered = True
             except Exception as e_ac:
                 print(f"ActionChainsでエラー: {e_ac}")

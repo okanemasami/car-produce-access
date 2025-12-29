@@ -226,9 +226,19 @@ try:
 
                 # excel()関数が実際に何をするか確認
                 excel_func = driver.execute_script("return excel.toString();")
-                print(f"excel()関数の定義:\n{excel_func[:500]}")  # 最初の500文字
+                print(f"excel()関数の定義 (全体):")
+                print(excel_func)
 
-                time.sleep(20)  # クリック後に長めに待機
+                # フォームの存在確認
+                forms = driver.execute_script("return document.forms.length;")
+                print(f"\nページ内のフォーム数: {forms}")
+
+                if forms > 0:
+                    form_action = driver.execute_script("return document.forms[0].action;")
+                    form_method = driver.execute_script("return document.forms[0].method;")
+                    print(f"フォーム[0] action: {form_action}, method: {form_method}")
+
+                time.sleep(25)  # クリック後に長めに待機
                 triggered = True
             except Exception as e_ac:
                 print(f"ActionChainsでエラー: {e_ac}")

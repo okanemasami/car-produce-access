@@ -206,14 +206,30 @@ try:
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", export_link)
             time.sleep(1)
 
-            # ActionChainsで確実にクリック
+            # JavaScriptで直接フォームをサブミット（最も確実）
             try:
-                # ブラウザコンソールログを取得できるようにする
-                driver.execute_cdp_cmd('Log.enable', {})
+                print("JavaScriptでフォームを直接サブミット試行...")
 
-                actions = ActionChains(driver)
-                actions.move_to_element(export_link).click().perform()
-                print("エクスポートリンクをクリックしました（ActionChains）")
+                # excel()関数の処理を手動で実行（クリックではなく直接）
+                submit_result = driver.execute_script("""
+                    // export_flgをチェック
+                    $('input[name=export_flg]').attr('checked', true);
+
+                    // フォームのactionを設定
+                    var rootPath = $('#root_path').val();
+                    var action = rootPath + 'group/stock/search/csv';
+                    $('#frm').attr('action', action);
+
+                    // 直接HTMLFormElement.submit()を呼ぶ（jQueryではなく）
+                    var form = document.getElementById('frm');
+                    if (form) {
+                        form.submit();
+                        return 'Form submitted directly';
+                    } else {
+                        return 'Form not found';
+                    }
+                """)
+                print(f"フォームサブミット結果: {submit_result}")
 
                 # クリック後のブラウザコンソールログを確認
                 time.sleep(2)

@@ -233,10 +233,19 @@ try:
                 forms = driver.execute_script("return document.forms.length;")
                 print(f"\nページ内のフォーム数: {forms}")
 
-                if forms > 0:
-                    form_action = driver.execute_script("return document.forms[0].action;")
-                    form_method = driver.execute_script("return document.forms[0].method;")
-                    print(f"フォーム[0] action: {form_action}, method: {form_method}")
+                # #frm の存在確認（重要！）
+                frm_exists = driver.execute_script("return document.getElementById('frm') !== null;")
+                print(f"#frm の存在: {frm_exists}")
+
+                if frm_exists:
+                    frm_action = driver.execute_script("return document.getElementById('frm').action;")
+                    print(f"#frm action: {frm_action}")
+                else:
+                    print("エラー: #frm が見つかりません！これがダウンロード失敗の原因です。")
+
+                # root_path の確認
+                root_path = driver.execute_script("return document.getElementById('root_path') ? document.getElementById('root_path').value : 'NOT FOUND';")
+                print(f"#root_path の値: {root_path}")
 
                 time.sleep(25)  # クリック後に長めに待機
                 triggered = True

@@ -93,13 +93,20 @@ jobs:
           xvfb-run --auto-servernum python goonet_bukken.py
         continue-on-error: true
 
-      # 12. Google Driveにアップロード
+      # 12. グーネットの問い合わせデータをダウンロード
+      - name: Download Goonet inquiry data
+        run: |
+          export PYTHONIOENCODING=utf-8
+          python goonet_inquiry.py
+        continue-on-error: true
+
+      # 13. Google Driveにアップロード
       - name: Upload to Google Drive
         run: |
           export PYTHONIOENCODING=utf-8
           python toGoogleDrive.py
 
-      # 13. ダウンロードしたファイルをアーティファクトとして保存(オプション)
+      # 14. ダウンロードしたファイルをアーティファクトとして保存(オプション)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()

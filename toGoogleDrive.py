@@ -46,9 +46,6 @@ REG_PARENT_FOLDER_NAME = '登録物件数'
 REG_CAR_SENSOR_FOLDER_NAME = 'カーセンサー_登録物件数'
 REG_GOONET_FOLDER_NAME = 'グーネット_登録物件数'
 
-# 問い合わせ数配下のフォルダ
-INQUIRY_PARENT_FOLDER_NAME = '問い合わせ数'
-INQUIRY_GOONET_FOLDER_NAME = 'グーネット'
 
 def get_downloads_folder():
     """OSに応じてダウンロードフォルダのパスを取得（環境変数・settings.json対応）"""
@@ -240,7 +237,6 @@ def upload_matching_downloads():
         kouka = [p for p in all_csvs if p.name.startswith('ハイエース専門店_') or p.name.startswith('CARAD_')]
         toroku = [p for p in all_csvs if 'torokubukken' in p.name.lower()]
         zaikoken = [p for p in all_csvs if '在庫検索一覧' in p.name or 'goonet_bukken' in p.name.lower()]
-        toiawase = [p for p in all_csvs if 'goonet_inquiry' in p.name.lower()]
 
         print("アップロード対象(カーセンサー: hankyobukken):")
         for p in hankyo:
@@ -253,9 +249,6 @@ def upload_matching_downloads():
             print(f" - {p}")
         print("アップロード対象(グーネット: 在庫検索一覧/登録物件数):")
         for p in zaikoken:
-            print(f" - {p}")
-        print("アップロード対象(グーネット: 問い合わせ数):")
-        for p in toiawase:
             print(f" - {p}")
 
         uploaded = []
@@ -281,12 +274,6 @@ def upload_matching_downloads():
         for p in zaikoken:
             print(f"\n[グーネット/登録物件数] アップロード: {p}")
             fid = upload_single_file_to(service, p, REG_PARENT_FOLDER_NAME, REG_GOONET_FOLDER_NAME)
-            if fid:
-                uploaded.append(fid)
-
-        for p in toiawase:
-            print(f"\n[グーネット/問い合わせ数] アップロード: {p}")
-            fid = upload_single_file_to(service, p, INQUIRY_PARENT_FOLDER_NAME, INQUIRY_GOONET_FOLDER_NAME)
             if fid:
                 uploaded.append(fid)
 

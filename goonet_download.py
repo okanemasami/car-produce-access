@@ -199,7 +199,7 @@ TARGET_URL = "https://motorgate.jp/ana/stockeffect"
 
 TARGET_SHOPS = [
     {"value": "1000491", "name": "ハイエース専門店　ＣＡＲ　ＰＲＯＤＵＣＥ　｜　カープロデュース", "filename_prefix": "ハイエース専門店_", "wait_seconds": 5},
-    {"value": "1002529", "name": "輸入車専門店　ＣＡＲＡＤ", "filename_prefix": "CARAD_", "wait_seconds": 10},
+    {"value": "1002529", "name": "輸入車専門店　ＣＡＲＡＤ", "filename_prefix": "CARAD_", "wait_seconds": 20},
 ]
 
 def login_goonet(driver, username: str, password: str):
@@ -324,9 +324,17 @@ def main():
             ok = trigger_download_for_shop(driver, shop)
             if ok:
                 wait_time = shop.get("wait_seconds", 5)
+                wait_start = datetime.datetime.now()
+                inprogress_before = has_inprogress_downloads(DOWNLOAD_DIR)
+                files_before = snapshot_files(DOWNLOAD_DIR)
                 print(f"{shop['name']}: ダウンロードボタンをクリック完了")
+                print(f"[WAIT-START] shop={shop['name']} time={wait_start.isoformat(timespec='seconds')} inprogress={inprogress_before} files={len(files_before)}")
                 print(f"{wait_time}秒待機...")
                 time.sleep(wait_time)
+                wait_end = datetime.datetime.now()
+                inprogress_after = has_inprogress_downloads(DOWNLOAD_DIR)
+                files_after = snapshot_files(DOWNLOAD_DIR)
+                print(f"[WAIT-END] shop={shop['name']} time={wait_end.isoformat(timespec='seconds')} inprogress={inprogress_after} files={len(files_after)} elapsed_sec={(wait_end - wait_start).total_seconds():.1f}")
             else:
                 print(f"{shop['name']}: ダウンロードボタンクリックに失敗")
 
